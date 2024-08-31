@@ -11,95 +11,71 @@ pipeline {
     stages {
         stage('git-checkout') {
             steps {
-                git 'https://github.com/jaiswaladi246/secretsanta-generator.git'
+                git branch: 'main', url: 'https://github.com/ahsan598/jenkins-project1.git'
             }
         }
+
 
         stage('Code-Compile') {
             steps {
-               sh "mvn clean compile"
-            }
-        }
-        
-        stage('Unit Tests') {
-            steps {
-               sh "mvn test"
-            }
-        }
-        
-		stage('OWASP Dependency Check') {
-            steps {
-               dependencyCheck additionalArguments: ' --scan ./ ', odcInstallation: 'DC'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+               sh "mvn compile"
             }
         }
 
-
+        
         stage('Sonar Analysis') {
             steps {
-               withSonarQubeEnv('sonar'){
-                   sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Santa \
-                   -Dsonar.java.binaries=. \
-                   -Dsonar.projectKey=Santa '''
-               }
+                sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.url=http://192.168.52.10:9000/ \
+                -Dsonar.login=squ_2cc3cb03b7cb5fffe6186a13a1fc91952f43776a \
+                -Dsonar.projectName=santa \
+                -Dsonar.java.binaries=. \
+                -Dsonar.projectKey=santa'''
+            }
+        }
+        
+
+		stage('OWASP Dependency Check') {
+            steps {
+                dependencyCheck additionalArguments: ' --scan ./ ', odcInstallation: 'DC'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
 
 		 
         stage('Code-Build') {
             steps {
-               sh "mvn clean package"
+               sh "mvn clean install"
             }
         }
 
-         stage('Docker Build') {
+
+        stage('Docker Build & Push') {
             steps {
-               script{
-                   withDockerRegistry(credentialsId: 'docker-cred') {
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred') {
                     sh "docker build -t  santa123 . "
-                 }
-               }
+                    sh "docker tag santa123 ahsan98/santa123:latest"
+                    sh "docker push ahsan98/santa123:latest"
+                    }
+                }
             }
         }
 
-        stage('Docker Push') {
-            steps {
-               script{
-                   withDockerRegistry(credentialsId: 'docker-cred') {
-                    sh "docker tag santa123 adijaiswal/santa123:latest"
-                    sh "docker push adijaiswal/santa123:latest"
-                 }
-               }
-            }
-        }
-        
-        	 
         stage('Docker Image Scan') {
             steps {
-               sh "trivy image adijaiswal/santa123:latest "
-            }
-        }}
-        
-         post {
-            always {
-                emailext (
-                    subject: "Pipeline Status: ${BUILD_NUMBER}",
-                    body: '''<html>
-                                <body>
-                                    <p>Build Status: ${BUILD_STATUS}</p>
-                                    <p>Build Number: ${BUILD_NUMBER}</p>
-                                    <p>Check the <a href="${BUILD_URL}">console output</a>.</p>
-                                </body>
-                            </html>''',
-                    to: 'jaiswaladi246@gmail.com',
-                    from: 'jenkins@example.com',
-                    replyTo: 'jenkins@example.com',
-                    mimeType: 'text/html'
-                )
+               sh "trivy image ahsan98/santa123:latest "
             }
         }
-		
-		
 
-    
+
+        stage('Docker Deploy') {
+            steps {
+               script{
+                   withDockerRegistry(credentialsId: 'docker-cred') {
+                    sh "docker run -d --name myapp -p 8081:8081 ahsan98/santa123:latest"
+                    }
+               }
+            }
+        }  	 
+    }
 }
