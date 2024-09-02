@@ -1,61 +1,49 @@
 pipeline {
     agent any
-    tools{
-        jdk 'jdk17'
-        maven 'maven3'
+    tools {
+        jdk 'jdk17'    // Ensure this matches the JDK version installed in Jenkins
+        maven 'maven3' // Ensure this matches the Maven version installed in Jenkins
     }
-    environment{
-        SCANNER_HOME= tool 'sonar-scanner'
+
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'  // Ensure 'sonar-scanner' matches the SonarScanner tool name in Jenkins
+        DOCKER_IMAGE = 'ahsan598/santagift:latest'  // Define your Docker image repository and tag
     }
 
     stages {
-        stage('git-checkout') {
+        stage('Git Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/ahsan598/jenkins-project1.git'
             }
         }
 
-
-        stage('Code-Compile') {
+        stage('Code Compile') {
             steps {
-               sh "mvn compile"
+                sh "mvn clean compile"
             }
         }
 
-        
-        stage('Sonar Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-                sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.url=http://192.168.52.10:9000/ \
-                -Dsonar.login=squ_2cc3cb03b7cb5fffe6186a13a1fc91952f43776a \
-                -Dsonar.projectName=santa \
-                -Dsonar.java.binaries=. \
-                -Dsonar.projectKey=santa'''
-            }
-        }
-        
-
-		stage('OWASP Dependency Check') {
-            steps {
-                dependencyCheck additionalArguments: ' --scan ./ ', odcInstallation: 'DC'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                withSonarQubeEnv('sonar-scanner') {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
 
-		 
-        stage('Code-Build') {
+        stage('Code Build') {
             steps {
-               sh "mvn clean install"
+                sh "mvn clean install"
             }
         }
-
 
         stage('Docker Build & Push') {
             steps {
-                script{
+                script {
                     withDockerRegistry(credentialsId: 'docker-cred') {
-                    sh "docker build -t  santa123 . "
-                    sh "docker tag santa123 ahsan98/santa123:latest"
-                    sh "docker push ahsan98/santa123:latest"
+                        sh "docker build -t santa123 ."
+                        sh "docker tag santa123 $DOCKER_IMAGE"
+                        sh "docker push $DOCKER_IMAGE"
                     }
                 }
             }
@@ -63,19 +51,24 @@ pipeline {
 
         stage('Docker Image Scan') {
             steps {
-               sh "trivy image ahsan98/santa123:latest "
+                sh "trivy image $DOCKER_IMAGE"
             }
         }
 
-
         stage('Docker Deploy') {
             steps {
-               script{
-                   withDockerRegistry(credentialsId: 'docker-cred') {
-                    sh "docker run -d --name myapp -p 8081:8081 ahsan98/santa123:latest"
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred') {
+                        sh "docker run -d --name myapp -p 8081:8081 $DOCKER_IMAGE"
                     }
-               }
+                }
             }
-        }  	 
+        }
+    }
+
+    post {
+        always {
+            cleanWs()  // Clean up workspace after build
+        }
     }
 }
