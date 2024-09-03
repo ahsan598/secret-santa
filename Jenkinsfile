@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'  // Ensure 'sonar-scanner' matches the SonarScanner tool name in Jenkins
-        DOCKER_IMAGE = 'ahsan598/santagift:latest'  // Define your Docker image repository and tag
+        DOCKER_IMAGE = 'ahsan98/santagift:latest'  // Define your Docker image repository and tag
     }
 
     stages {
