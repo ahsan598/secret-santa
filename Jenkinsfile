@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'  // Ensure 'sonar-scanner' matches the SonarScanner tool name in Jenkins
-        DOCKER_IMAGE = 'ahsan98/santagift:1.2'  // Define your Docker image repository and tag
+        DOCKER_IMAGE = 'ahsan98/santagift:2.2'  // Define your Docker image repository and tag
     }
 
     stages {
@@ -79,7 +79,7 @@ pipeline {
         stage('Docker Deploy') {
             steps {
                 script {
-                    sh "docker run -d --name myapp -p 8085:8085 $DOCKER_IMAGE"
+                    sh "docker run -d --name myapp -p 8085:8080 $DOCKER_IMAGE"
                 }
             }
         }
