@@ -5,7 +5,7 @@ FROM openjdk:17-alpine
 WORKDIR /usr/src/app
 
 # Expose the application port
-EXPOSE 8081
+EXPOSE 8085
 
 # Environment variable to specify the app home directory
 ENV APP_HOME /usr/src/app
