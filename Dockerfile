@@ -11,7 +11,7 @@ EXPOSE 8070
 ENV APP_HOME /usr/src/app
 
 # Copy the JAR file into the container
-COPY target/secretsanta-0.0.3-SNAPSHOT.jar $APP_HOME/app.jar
+COPY target/secretsanta-0.0.1-SNAPSHOT.jar $APP_HOME/app.jar
 
 # Set the entry point to run the Java application
 ENTRYPOINT ["java", "-jar", "app.jar"]
