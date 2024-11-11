@@ -7,13 +7,13 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'  // Ensure 'sonar-scanner' matches the SonarScanner tool name in Jenkins
-        DOCKER_IMAGE = 'ahsan98/santagift:2.5'  // Define your Docker image repository and tag
+        DOCKER_IMAGE = 'ahsan98/santagift:1.0'  // Define your Docker image repository and tag
     }
 
     stages {
         stage('Git Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ahsan598/jenkins-project1.git'
+                git branch: 'main', url: 'https://github.com/ahsan598/secret-santa.git'
             }
         }
 
@@ -86,7 +86,7 @@ pipeline {
         stage('Docker Deploy') {
             steps {
                 script {
-                    sh "docker run -d --name myapp -p 8085:8080 $DOCKER_IMAGE"
+                    sh "docker run -d --name myapp -p 8071:8071 $DOCKER_IMAGE"
                 }
             }
         }
